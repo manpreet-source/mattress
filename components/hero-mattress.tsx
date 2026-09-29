@@ -3,10 +3,10 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Environment, RoundedBox } from '@react-three/drei';
 import { useRef, useState } from 'react';
-import type { Mesh } from 'three';
+import type { Group } from 'three';
 
 function MattressModel({ active }: { active: boolean }) {
-  const group = useRef<Mesh>(null);
+  const group = useRef<Group>(null);
   useFrame((state, delta) => {
     if (!group.current) return;
     group.current.rotation.y += delta * 0.08;
@@ -27,10 +27,6 @@ function MattressModel({ active }: { active: boolean }) {
       <RoundedBox args={[4.62, 0.52, 2.2]} radius={0.12} smoothness={5} position={[0, -0.25, 0]}>
         <meshPhysicalMaterial color="#123d38" roughness={0.52} />
       </RoundedBox>
-      <mesh position={[0, -0.53, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4.35, 1.95]} />
-        <meshStandardMaterial color="#092e2a" roughness={0.7} />
-      </mesh>
       {[[-1.55, -0.55], [-0.5, -0.55], [0.55, -0.55], [1.6, -0.55]].map(([x, z]) => (
         <mesh key={`${x}-${z}`} position={[x, -0.55, z * 0.1]}>
           <cylinderGeometry args={[0.09, 0.09, 0.22, 16]} />
