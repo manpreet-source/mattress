@@ -1,0 +1,69 @@
+import Link from 'next/link';
+import { ArrowRight, Check, ShieldAlert, SlidersHorizontal } from 'lucide-react';
+import { mattresses } from '@/data/mattresses';
+import { scoreMattress, SCORING_VERSION } from '@/lib/scoring/engine';
+import type { Firmness, MattressType, Motion, SleepPosition, Temperature, SleepProfile } from '@/lib/types';
+
+const numberMap: Record<string, number> = { '<130': 100, '130–180': 155, '180–230': 205, '230+': 260, 'Under 5\'4"': 62, '5\'4"–5\'9"': 67, '5\'10"–6\'2"': 71, 'Over 6\'2"': 75, 'under-800': 800, '800-1200': 1200, '1200-1800': 1800, '1800+': 2500 };
+
+function profileFrom(params: Record<string, string | undefined>): SleepProfile {
+  return {
+    position: (params.position || 'side') as SleepPosition,
+    weight: numberMap[params.weight || '130–180'] || 155,
+    height: numberMap[params.height || '5\'4"–5\'9"'] || 67,
+    firmness: (params.firmness || 'medium') as Firmness,
+    surfaceFeel: (params.surfaceFeel || 'medium') as Firmness,
+    temperature: (params.temperature || 'neutral') as Temperature,
+    motion: (params.motion || 'single') as Motion,
+    priority: (params.priority || 'balanced') as SleepProfile['priority'],
+    budget: numberMap[params.budget || '1200-1800'] || 1800,
+    types: [(params.types || 'hybrid') as MattressType],
+  };
+}
+
+export default async function Results({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  const params = Object.fromEntries(Object.entries(raw).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
+  const profile = profileFrom(params);
+  const results = mattresses.map((mattress) => ({ mattress, score: scoreMattress(mattress, profile) })).sort((a, b) => b.score.overall - a.score.overall);
+
+  return (
+    <main className="min-h-screen bg-[#eef4f0] pb-20 pt-8">
+      <header className="mx-auto flex max-w-[1240px] items-center justify-between px-6">
+        <Link href="/" className="flex items-center gap-2 font-extrabold tracking-[-.04em]"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#092e2a] text-white">M</span> mattress match</Link>
+        <Link href="/#match" className="btn-secondary !px-4 !py-2.5 text-sm"><SlidersHorizontal size={15}/> Refine match</Link>
+      </header>
+
+      <section className="section pb-8 pt-16">
+        <span className="eyebrow">Your personalized results</span>
+        <h1 className="mt-4 max-w-4xl text-5xl font-extrabold tracking-[-.055em] sm:text-7xl">Here&apos;s what fits <span className="text-[#18a895]">your sleep.</span></h1>
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-[#60706b]">Scores are calculated from your profile, not generic star ratings. We show the reasons and tradeoffs so you can decide with context.</p>
+        <div className="mt-6 flex flex-wrap gap-2 text-xs text-[#53635e]">
+          <span className="rounded-full bg-white px-3 py-2">{profile.position} sleeper</span><span className="rounded-full bg-white px-3 py-2">{profile.temperature} sleeper</span><span className="rounded-full bg-white px-3 py-2">${profile.budget.toLocaleString()} budget</span><span className="rounded-full bg-white px-3 py-2">Model v{SCORING_VERSION}</span>
+        </div>
+      </section>
+
+      <section className="section grid gap-5 lg:grid-cols-3">
+        {results.map(({ mattress, score }, index) => (
+          <article key={mattress.id} className={`overflow-hidden rounded-[30px] border bg-white shadow-[0_20px_70px_rgba(10,45,40,.06)] ${index === 0 ? 'border-[#18b7a2] lg:-translate-y-2' : 'border-[#dce4df]'}`}>
+            <div className="relative h-52 overflow-hidden bg-[#dfe9e4]">
+              <img src={mattress.image} alt={`${mattress.brand} ${mattress.model}`} className="h-full w-full object-cover transition duration-700 hover:scale-105" />
+              {index === 0 && <span className="absolute left-4 top-4 rounded-full bg-[#092e2a] px-3 py-2 text-xs font-bold text-white">Top match</span>}
+            </div>
+            <div className="p-6 sm:p-7">
+              <div className="text-xs font-bold uppercase tracking-[.14em] text-[#74817d]">{mattress.brand}</div>
+              <h2 className="mt-1 text-2xl font-extrabold">{mattress.model}</h2>
+              <div className="mt-5 flex items-end gap-2"><strong className="text-6xl font-extrabold tracking-[-.07em] text-[#092e2a]">{score.overall}</strong><span className="mb-2 text-sm text-[#72807b]">/100 match</span></div>
+              <div className="mt-5 space-y-3">{[['Pressure relief',score.pressure],['Support',score.support],['Cooling',score.cooling],['Motion',score.motion]].map(([label,value])=><div key={label as string}><div className="mb-1 flex justify-between text-xs"><span>{label}</span><b>{value}</b></div><div className="h-1.5 rounded-full bg-[#e3ebe7]"><div className="h-full rounded-full bg-[#18b7a2]" style={{width:`${value}%`}} /></div></div>)}</div>
+              <div className="mt-6 rounded-2xl bg-[#f2f6f3] p-4"><div className="flex items-center gap-2 text-sm font-bold"><Check size={15} className="text-[#18a895]"/> Why it fits</div><ul className="mt-2 space-y-1 text-sm leading-6 text-[#65736e]">{score.reasons.slice(0,2).map((reason)=><li key={reason}>{reason}</li>)}</ul></div>
+              {score.risks.length > 0 && <div className="mt-3 rounded-2xl bg-[#fff7e9] p-4"><div className="flex items-center gap-2 text-sm font-bold text-[#765516]"><ShieldAlert size={15}/> Consider</div><p className="mt-1 text-sm leading-6 text-[#806c45]">{score.risks[0]}</p></div>}
+              <Link href={`/mattress/${mattress.id}`} className="btn-primary mt-5 w-full">See full match <ArrowRight size={16}/></Link>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="section pt-10"><div className="rounded-[32px] bg-[#092e2a] p-7 text-white sm:p-10"><div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center"><div><span className="text-xs font-bold uppercase tracking-[.16em] text-[#6ce7d6]">Transparent by design</span><h2 className="mt-3 text-3xl font-extrabold">Want to understand the score?</h2><p className="mt-2 max-w-2xl text-white/60">See the scoring categories, weights, assumptions and how risk flags are generated.</p></div><Link href="/methodology" className="btn-primary !bg-[#6ce7d6] !text-[#092e2a]">Read methodology <ArrowRight size={17}/></Link></div></div></section>
+    </main>
+  );
+}
