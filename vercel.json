@@ -1,0 +1,1 @@
+{"crons":[{"path":"/api/cron/rtings-sync","schedule":"0 3 * * 0"}]}
