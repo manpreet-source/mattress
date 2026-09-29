@@ -1,0 +1,9 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+
+export function HeroMattress(){
+ const ref=useRef<HTMLDivElement>(null);
+ useEffect(()=>{const el=ref.current;if(!el)return;const onMove=(e:MouseEvent)=>{const r=el.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5;const y=(e.clientY-r.top)/r.height-.5;el.style.transform=`perspective(900px) rotateX(${y*-5}deg) rotateY(${x*7}deg)`};el.addEventListener('mousemove',onMove);return()=>el.removeEventListener('mousemove',onMove)},[]);
+ return <div className="relative mx-auto h-[390px] w-full max-w-[620px] sm:h-[470px]" aria-label="Interactive mattress visualization"><div className="orb absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#45dbc7]/20 blur-3xl"/><div ref={ref} className="relative h-full transition-transform duration-200 ease-out"><div className="absolute left-[12%] top-[27%] h-[42%] w-[76%] rotate-[-7deg] rounded-[32px] bg-gradient-to-br from-white via-[#e9f1ed] to-[#b9cbc5] shadow-[0_45px_70px_rgba(15,45,40,.18)]"/><div className="absolute left-[12%] top-[34%] h-[40%] w-[76%] rotate-[-7deg] rounded-[30px] bg-gradient-to-br from-[#d7e5df] to-[#829d95] shadow-2xl"/><div className="absolute left-[13%] top-[42%] h-[37%] w-[75%] rotate-[-7deg] rounded-[28px] bg-gradient-to-br from-[#244c46] to-[#0a2824] shadow-2xl"/><div className="absolute left-[24%] top-[24%] rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-[#28534c] backdrop-blur">Cooling cover</div><div className="absolute right-[8%] top-[55%] rounded-full border border-white/30 bg-[#0d3732]/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-white backdrop-blur">Support core</div><div className="absolute bottom-[12%] left-[15%] flex items-center gap-2 text-xs font-medium text-[#55706a]"><span className="h-2 w-2 animate-pulse rounded-full bg-[#18b7a2]"/>Interactive 3D preview</div></div></div>
+}
