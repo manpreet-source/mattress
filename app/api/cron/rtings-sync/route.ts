@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
-const ACTOR_ID = process.env.APIFY_RTINGS_ACTOR_ID || 'crawlerbros/rtings-scraper';
+const ACTOR_ID = process.env.APIFY_RTINGS_ACTOR_ID || 'dCa1uCOn8ZtEkUamC';
 
 async function sync(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -13,7 +13,7 @@ async function sync(request: Request) {
   const { data: run, error: runError } = await db.from('ingestion_runs').insert({ source: 'rtings', actor_id: ACTOR_ID, status: 'started' }).select('id').single();
   if (runError || !run) return NextResponse.json({ error: runError?.message || 'Could not create ingestion run' }, { status: 500 });
   try {
-    const start = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(ACTOR_ID)}/runs?token=${encodeURIComponent(token)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) });
+    const start = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(ACTOR_ID)}/runs?token=${encodeURIComponent(token)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'search', category: 'Mattress', maxItems: 100 }) });
     if (!start.ok) throw new Error(`Apify actor start failed (${start.status})`);
     const runData = await start.json() as { data?: { defaultDatasetId?: string } }; const datasetId = runData.data?.defaultDatasetId;
     if (!datasetId) throw new Error('Apify did not return a dataset id');
